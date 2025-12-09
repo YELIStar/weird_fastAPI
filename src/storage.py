@@ -1,4 +1,5 @@
 import os
+from typing import Any, Literal
 import uuid
 from fastapi import HTTPException
 import magic  # 验证文件真实类型
@@ -12,8 +13,12 @@ class LocalAvatarStorage:
         self.upload_dir = settings.UPLOAD_DIR
         self.max_size = settings.MAX_AVATAR_SIZE
         # 允许的图片MIME类型
-        self.allowed_mime_types = {"image/jpeg",
-                                   "image/png", "image/gif", "image/jpg"}
+        self.allowed_mime_types = {
+            "image/jpeg",
+            "image/png",
+            "image/gif",
+            "image/jpg"
+        }
         # MIME类型对应扩展名（避免伪造扩展名）
         self.mime_to_ext = {
             "image/jpeg": "jpg",
@@ -22,7 +27,7 @@ class LocalAvatarStorage:
             "image/jpg": "jpg"
         }
 
-    def _validate_file(self, file_content: bytes):
+    def _validate_file(self, file_content: bytes) -> (Any | Literal['application/octet-stream']):
         """验证文件大小和类型"""
         # 1. 检查文件大小
         if len(file_content) > self.max_size:
@@ -30,11 +35,13 @@ class LocalAvatarStorage:
                 status_code=400,
                 detail=f"文件大小超过{self.max_size/1024/1024}MB限制"
             )
+
         # 2. 检查文件真实类型（通过文件头，避免伪造Content-Type）
         try:
             mime_type = magic.from_buffer(file_content, mime=True)
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"文件类型验证失败：{str(e)}")
+
         if mime_type not in self.allowed_mime_types:
             raise HTTPException(
                 status_code=400,

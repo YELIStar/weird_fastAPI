@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, File, UploadFile, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -28,12 +29,12 @@ app.mount(
     name="static"
 )
 
+
 # 启动时创建数据库表
-
-
-@app.on_event("startup")
-def on_startup():
-    create_db_and_tables()
+@asynccontextmanager
+async def create_db():
+    await create_db_and_tables()
+    yield
 
 # ------------------- 接口实现 -------------------
 # 1. 创建用户（测试用）
